@@ -9,3 +9,4 @@ sudo apt update -y
 sudo apt install ansible -y
 sudo apt install python-pip -y
 pip install jmespath
+git clone https://github.com/f5devcentral/f5-tls-automation
