@@ -29,9 +29,9 @@
     partition: 'Common'
     domainname: 'example.domain.com'
     state: 'present'
-    keyurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/files/certs/testapp.f5.demo.key'
-    certurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/files/certs/testapp.f5.demo.crt'
-    cachainurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/files/certs/testapp.f5.chain.crt'
+    keyurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/master/code/files/certs/testapp.f5.demo.key'
+    certurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/master/code/files/certs/testapp.f5.demo.crt'
+    cachainurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/master/code/files/certs/testapp.f5.chain.crt'
     keypassphrase: ''
 
   tasks:

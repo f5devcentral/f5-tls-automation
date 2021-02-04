@@ -24,9 +24,9 @@ The easiest way to import the Collection and Environment into Postman is via the
 |image1|
 
 Collection:
-https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/postman/Certificates%20and%20Keys.postman_collection.json
+https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/master/code/postman/Certificates%20and%20Keys.postman_collection.json
 
 Environment:
-https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/postman/Certificates%20and%20Keys.postman_environment.json
+https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/master/code/postman/Certificates%20and%20Keys.postman_environment.json
 
 .. |image1| image:: images/image1.png
