@@ -16,8 +16,8 @@ Cheers,
 
 The Team
 
-.. _contributions: https://github.com/jmcalalang/f5-tls-automation/graphs/contributors
-.. _Issue: https://github.com/jmcalalang/f5-tls-automation/issues
+.. _contributions: https://github.com/f5devcentral/f5-tls-automation/graphs/contributors
+.. _Issue: https://github.com/f5devcentral/f5-tls-automation/issues
 
 .. _jmcalalang: https://www.github.com/jmcalalang
 .. _mikeoleary: https://github.com/mikeoleary
