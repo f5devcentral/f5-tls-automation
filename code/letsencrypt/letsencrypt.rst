@@ -3,6 +3,7 @@ BIG-IP - Letsencrypt with F5 Cloudservices DNS
 ==============================================
 
 .. note:: Tested with Ansible 2.09
+
 *******
 Summary
 *******
@@ -121,9 +122,6 @@ These are the steps executed to create the certificates. There is no user interv
 
    - installs key, cert and CA cert into BIG-IP and creates a new SSL profile with the cert/key/CAchain
 
-*********
-Examples:
-*********
 
 *****************
 Example playbooks
