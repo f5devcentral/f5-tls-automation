@@ -81,7 +81,7 @@ Use case 2: Upload into multiple BIG-IP
 
 It is possible to upload the cert/key pair to multiple BIG-IP instances as well.
 
-The login credentials for multiple BIG-IP's are stored in the ``host_vars/`` folder.
+The login credentials for multiple BIG-IPs are stored in the ``host_vars/`` folder.
 Each BIG-IP has an individual file with its own provider variables.
 
 Therefore there are no provider variables in the playbook.
@@ -150,7 +150,7 @@ To change the location of the Let's Encrypt folder structure, use the ``letsencr
 Use case 7: working around Let's Encrypt rate limiting
 ======================================================
 
-Let's Encrypt limits the number of requests a single account key can send in a given time interval. I found it usefull to have a limited workaround to extend the rate li8mit during tests and development.
+Let's Encrypt limits the number of requests a single account key can send in a given time interval. I found it usefull to have a limited workaround to extend the rate limit during tests and development.
 One limiting factor is the account key. With following variable, the role will generate a new Account key and allow more testing, before IP rate limiting of Let's Encrpt kick in:
 
 ``ansible-playbook example_playbook.yml  -e "domain_name=<www.mydomain.com>" -e "acme_email=certadmin@mydomain.com" -e "acme_directory_target=prod" -e "new_le_account_key=true"``
@@ -164,10 +164,10 @@ Example Ansible environment:
 An example ansible environment can be found here: `Ansible Environment`_
 
 *************
-Prerequesites
+Prerequisites
 *************
 
-Following Prerequesites are needed
+Following Prerequisites are needed
 
 1. F5 Cloudservices account with subscruption to primary DNS service
 2. primary Zone for domain exists
