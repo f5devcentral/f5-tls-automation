@@ -169,7 +169,7 @@ Prerequisites
 
 Following Prerequisites are needed
 
-1. F5 Cloudservices account with subscruption to primary DNS service
+1. F5 Cloudservices account with subscription to primary DNS service
 2. primary Zone for domain exists
 3. Ansible 2.9
 4. jmespath installed on ansible host
