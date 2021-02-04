@@ -14,11 +14,9 @@ This ansible role provides following functionality:
 2. uses F5 Cloudservices primary DNS offering as validation for domain ownership
 3. uploads generated certificate and key to a BIG-IP and creates a SSL Client profile with it.
 
-
 The rolename is: **f5cs_dns_letsencrypt_bigip**
 
 The role can be downloaded from the roles folder here: `Ansible Roles`_.
-
 
 ********************************
 Variables required for the role:
@@ -57,70 +55,7 @@ Optional variables
 |                        |                                   | ``off`` to not send certs to BIG-IP          |
 +------------------------+-----------------------------------+----------------------------------------------+
 
-*************
-Prerequesites
-*************
 
-Following Prerequesites are needed
-
-1. F5 Cloudservices account with subscruption to primary DNS service
-2. primary Zone for domain exists
-3. Ansible 2.9
-4. jmespath installed on ansible host
-
-Here a script that can run on an ubuntu 18.04 host to install all required software:
-
-.. literalinclude :: ubuntu_preparation.sh
-   :language: bash`
-
-After the software installation, clone the git repo or download the role from `Ansible Roles`_ and install into ansible
-
-******************
-Steps of the Role:
-******************
-
-These are the steps executed to create the certificates. There is no user intervention required.
-
-1. Checks if certificate already exists in certificate folder. If exists, skip subsequent certificate creation steps.
-
-2. Creates a subdirectory on the ansible host to run and store certificates and keys
-
-   - default directory is the ``{{playbook_dir}}/F5letsencrypt``
-   - This directory can be changed via variable ``letsencrypt_dir``
-   - creates following subdirectorys: **account**, **certs**, **csrs**, **keys**
-
-3. Creates Letsencrypt Account-ID
-
-   - variable ``new_le_account_key`` forces the role to create a new Account ID if desired. Usefull if Letsencrypt ratelimits the Account-ID.
-
-4. Create TLS Certificate signing request
-
-   - the csr is stored in the csrs subfolder
-
-5. Send API call to Letsencrypt to initiate domain name ownership verification
-
-   - this role uses DNS as verification method.
-   - per default Letsencrypt staging envionment is used. This results in test certificates
-   - variable ``acme_directory_target`` sends it to Letsencrypt production environment for public cert creation
-
-6. Creates/modifys acme-challenge value into F5 Cloudservices primary DNS primary zone entry for existing zone record
-
-   - uses an exisiting F5 Cloudservices account with subscription to primary DNS
-   - the primary zone record for the domain name has to exist and be activated before the role is run
-   - creates or modifies the **_acme-challenge** dns prefix entry for Letsencrypt validation
-
-7. Sends API call to Letsencrypt to finish domain name ownership validation and download certificate and fullchain certificate
-
-   - finishes letsencrypt verification and download certificate, CA certificate and fullchain certificate into the certs subfolder
-
-8. Upload certificate and key into BIG-IP
-
-   - skips this step if ``send_to_bigip`` does not have the value ``on``
-   - BIG-IP login credentials with admin rights must be provided via provider vars in playbook or inventory
-
-9. Create Client SSL profile in BIG-IP and use uploaded key, certificate and CA
-
-   - installs key, cert and CA cert into BIG-IP and creates a new SSL profile with the cert/key/CAchain
 
 
 *****************
@@ -199,7 +134,7 @@ Example run command for Letsencrypt production API environment. This command cre
 Use case 5: use role without uploading to BIG-IP
 ================================================
 
-If it is not desired to upload the cert/kei into BIG-IP use the ``send_to_bigip=off`` flag
+If it is not desired to upload the cert/key into BIG-IP use the ``send_to_bigip=off`` flag
 
 ``ansible-playbook example_playbook.yml  -e "domain_name=<www.mydomain.com>" -e "acme_email=certadmin@mydomain.com" -e "acme_directory_target=prod" -e "send_to_bigip=off"``
 
@@ -239,10 +174,67 @@ Following Prerequesites are needed
 3. Ansible 2.9
 4. jmespath installed on ansible host
 
-Here a script that can be run on an ubuntu 18.04 host to install all required software:
+Here a script that can run on an ubuntu 18.04 host to install all required software:
 
 .. literalinclude :: ubuntu_preparation.sh
    :language: bash`
+
+After the software installation, clone the git repo or download the role from `Ansible Roles`_ and install into ansible
+
+``git clone https://github.com/f5devcentral/f5-tls-automation``
+
+next change into the example ansible directory:
+
+``cd f5-tls-automation/code/letsencrypt/example_ansible_env/``
+
+now run the playbook from here.
+
+***********************
+How it internally works
+***********************
+
+These are the steps executed to create the certificates. There is no user intervention required.
+
+1. Checks if certificate already exists in certificate folder. If exists, skip subsequent certificate creation steps.
+
+2. Creates a subdirectory on the ansible host to run and store certificates and keys
+
+   - default directory is the ``{{playbook_dir}}/F5letsencrypt``
+   - This directory can be changed via variable ``letsencrypt_dir``
+   - creates following subdirectorys: **account**, **certs**, **csrs**, **keys**
+
+3. Creates Letsencrypt Account-ID
+
+   - variable ``new_le_account_key`` forces the role to create a new Account ID if desired. Usefull if Letsencrypt ratelimits the Account-ID.
+
+4. Create TLS Certificate signing request
+
+   - the csr is stored in the csrs subfolder
+
+5. Send API call to Letsencrypt to initiate domain name ownership verification
+
+   - this role uses DNS as verification method.
+   - per default Letsencrypt staging envionment is used. This results in test certificates
+   - variable ``acme_directory_target`` sends it to Letsencrypt production environment for public cert creation
+
+6. Creates/modifys acme-challenge value into F5 Cloudservices primary DNS primary zone entry for existing zone record
+
+   - uses an exisiting F5 Cloudservices account with subscription to primary DNS
+   - the primary zone record for the domain name has to exist and be activated before the role is run
+   - creates or modifies the **_acme-challenge** dns prefix entry for Letsencrypt validation
+
+7. Sends API call to Letsencrypt to finish domain name ownership validation and download certificate and fullchain certificate
+
+   - finishes letsencrypt verification and download certificate, CA certificate and fullchain certificate into the certs subfolder
+
+8. Upload certificate and key into BIG-IP
+
+   - skips this step if ``send_to_bigip`` does not have the value ``on``
+   - BIG-IP login credentials with admin rights must be provided via provider vars in playbook or inventory
+
+9. Create Client SSL profile in BIG-IP and use uploaded key, certificate and CA
+
+   - installs key, cert and CA cert into BIG-IP and creates a new SSL profile with the cert/key/CAchain
 
 
 .. _`Ansible Roles`: https://github.com/f5devcentral/f5-tls-automation/tree/master/code/letsencrypt/roles

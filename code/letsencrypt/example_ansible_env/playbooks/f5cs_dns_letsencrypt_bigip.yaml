@@ -14,9 +14,10 @@
 #      server_port: 443
 #    partition: 'Common'
 #    state: 'present'
+
 ## Optional vars for the role
-#   f5cs_username: 'F5Cloudservices user name'
-#   f5cs_appsword" 'F5Cloudservices password'
+   f5cs_username: 'F5Cloudservices user name'
+   f5cs_password: 'F5Cloudservices password'
 #   domain_name: 'certificate fqdn'
 #   acme_email: 'myemail@mydomain.com'
 ## Used to create a real certificate. Default sends to staging, which does not create real certificates

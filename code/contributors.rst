@@ -8,7 +8,7 @@ Amazing contributions_ from:
 - Jon Calalang (jmcalalang_)
 - Aaron Laws
 - Michael OLeary (mikeoleary_)
-- Vlad Bojkovic (vbojko_)
+- Vladimir Bojkovic (vbojko_)
 
 We welcome all feedback, please open a Issue_ with whats going on.
 
