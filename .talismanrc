@@ -91,3 +91,9 @@ fileignoreconfig:
   checksum: 4dd6c0a8fb11cdc0c9758de16a3a34d83ba4856c064ac9ba695bdf52c2dc4683
 - filename: code/_themes/f5_sphinx_theme/static/js/bootstrap.js
   checksum: 08431c3c470fd830a44252f174123ee1340fef001b527496e88371a9aa6cffef
+- filename: code/letsencrypt/example_playbook.yml
+  checksum: 16feea2f68664955e1a5ffcc62712a9c919612036a88cb84fa6faf01565159e6
+- filename: code/letsencrypt/example_ansible_env/playbooks/f5cs_dns_letsencrypt_bigip.yaml
+  checksum: c5c6d2bcb8e8fe8ed6641afe70c820b2cdaefa5db3426a277403143450a39e89
+- filename: code/letsencrypt/letsencrypt.rst
+  checksum: bc5c99d2ab4c2c3f69d9968ba648a9db38f3ebcd5f2f6b5faadb6033526aa196
