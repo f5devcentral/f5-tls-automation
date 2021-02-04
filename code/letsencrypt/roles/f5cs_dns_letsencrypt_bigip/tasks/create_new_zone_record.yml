@@ -1,0 +1,66 @@
+---
+
+## tasks file for f5dnsprimary
+
+#### Create a new zone record entry
+
+## finalize API call body
+- name: prepare json body for zone creation
+  template:
+    src: templates/f5dns_create_zone_record.j2
+    dest: "{{role_path}}/templates/f5dns_create_zone_record_{{domain_name}}.json"
+  delegate_to: localhost
+
+- name: send login to F5 Cloud Services API and receive authentication token
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+    body: "{{lookup('file','{{role_path}}/templates/f5dns_create_zone_record_{{domain_name}}.json') }}"
+    body_format: json
+  register: dns_registration_response
+
+- name: store zone subscription id
+  set_fact:
+    zone_sub_id: "{{ dns_registration_response.json.subscription_id }}"
+
+## Activate created Zone
+- name: activate created zone
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions/{{zone_sub_id}}/activate"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+
+## Verify created zone is deployed and active
+- name: check deployment status
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions/{{zone_sub_id}}/status"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+  register: dns_status
+  until: dns_status.json.service_state == "DEPLOYED"
+  retries: 10
+  delay: 5
+
+- name: check activation status
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions/{{zone_sub_id}}/status"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+  register: dns_status
+  until: dns_status.json.status == "ACTIVE"
+  retries: 10
+  delay: 5
+
+- name: delete temporary file
+  file:
+    path: "{{role_path}}/templates/f5dns_create_zone_record_{{domain_name}}.json"
+    state: absent

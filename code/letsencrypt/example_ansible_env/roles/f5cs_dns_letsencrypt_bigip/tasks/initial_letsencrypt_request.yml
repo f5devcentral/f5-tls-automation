@@ -1,0 +1,57 @@
+---
+
+##   Create a CSR for the domain including the private key
+  - name: "Generate Let's Encrypt private key"
+    shell: "openssl genrsa 4096 | sudo tee {{ letsencrypt_keys_dir }}/{{ domain_name }}.key"
+
+  - name: "Generate Let's Encrypt CSR"
+    shell: "openssl req -new -sha256 -key {{ letsencrypt_keys_dir }}/{{ domain_name }}.key -subj \"/CN={{ domain_name }}\" -reqexts SAN -config <(cat /etc/ssl/openssl.cnf <(printf \"\n[SAN]\nsubjectAltName=DNS:{{ domain_name }}\")) | sudo tee {{ letsencrypt_csrs_dir }}/{{ domain_name }}.csr"
+    args:
+      executable: /bin/bash
+
+## define if letsencrypt staging or production environment is used.
+## Default is set to staging.
+  - name: set acme_directory to prod if acme_directory_target variable is set to Prod
+    set_fact:
+      acme_directory: "{{ acme_directory_prod }}"
+    when: acme_directory_target == 'prod'
+
+  - name: set acme_directory to staging if acme_directory_target variable is not Prod
+    set_fact:
+      acme_directory: "{{ acme_directory_staging }}"
+    when: acme_directory_target != 'prod'
+
+  #- name:
+  #  debug:
+  #    msg: " Acme target is: {{ acme_directory }}"
+
+## start letsencrypt challenge. The result is the _acme-challenge value for DNS based verification.
+  - name: "Begin Let's Encrypt challenges"
+    acme_certificate:
+      acme_directory: "{{ acme_directory }}"
+      acme_version: "{{ acme_version }}"
+      account_key_src: "{{ letsencrypt_account_key }}"
+      account_email: "{{ acme_email }}"
+      terms_agreed: 1
+      challenge: "{{ acme_challenge_type }}"
+      csr: "{{ letsencrypt_csrs_dir }}/{{ domain_name }}.csr"
+      dest: "{{ letsencrypt_certs_dir }}/{{ domain_name }}.crt"
+      fullchain_dest: "{{ letsencrypt_certs_dir }}/fullchain_{{ domain_name }}.crt"
+      remaining_days: 91
+    register: acme_challenge_your_domain
+
+  #- name: check response obtained from letsencrypt
+  #  debug:
+  #    msg: "{{ acme_challenge_your_domain }}"
+
+
+  - name: get value for dns _acme-challenge
+    set_fact:
+      acme_challenge: "{{acme_challenge_your_domain.challenge_data[(domain)][(dns1)].resource_value}}"
+    vars:
+      domain: '{{domain_name}}'
+      dns1: 'dns-01'
+
+  #- name: check if the response was extracted correctly
+  #  debug:
+  #    msg: "{{ acme_challenge }}"

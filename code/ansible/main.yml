@@ -1,0 +1,214 @@
+---
+
+#    Created by - Jon Calalang
+#    This task comes with no warranty or support
+#
+#    Modules used:
+#
+#    - get_url
+#    - bigip_profile_client_ssl
+#    - bigip_ssl_key
+#    - ansible.builtin.file
+#
+#    Module Documentation: https://docs.ansible.com/ansible/2.9/modules/list_of_all_modules.html
+#
+
+- name: Copy Certificate and Key from URL and create BIG-IP Client SSL Profile
+  hosts: localhost
+  gather_facts: False
+  connection: local
+
+  vars:
+    bigips: [bigip1.fqdn.com,bigip2.fqdn.com]
+    provider:
+      server: '{{ item }}'
+      user: 'admin'
+      password: 'password'
+      validate_certs: no
+      server_port: 443
+    partition: 'Common'
+    domainname: 'example.domain.com'
+    state: 'present'
+    keyurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/files/certs/testapp.f5.demo.key'
+    certurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/files/certs/testapp.f5.demo.crt'
+    cachainurl: 'https://raw.githubusercontent.com/f5devcentral/f5-tls-automation/main/code/files/certs/testapp.f5.chain.crt'
+    keypassphrase: ''
+
+  tasks:
+
+# Download Local Files
+
+    - name: Download Local Key
+      get_url:
+        url: '{{ keyurl }}'
+        dest: '{{ playbook_dir }}/{{ domainname }}.key'
+      when: state == "present"
+
+    - name: Download Local Certificate
+      get_url:
+        url: '{{ certurl }}'
+        dest: '{{ playbook_dir }}/{{ domainname }}.crt'
+      when: state == "present"
+
+    - name: Download Local CA Chain
+      get_url:
+        url: '{{ cachainurl }}'
+        dest: '{{ playbook_dir }}/{{ domainname }}_cachain.crt'
+      when: state == "present"
+
+# Delete Objects
+
+    - name: Wait a maximum of 300 seconds for BIG-IP to be ready to take configuration
+      bigip_wait:
+        timeout: 300
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Delete a Client SSL profile
+      bigip_profile_client_ssl:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: 'tls_profile_{{ domainname }}'
+        state: '{{ state }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Delete SSL Key
+      bigip_ssl_key:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Delete SSL Certificate
+      bigip_ssl_certificate:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Delete SSL CA Chain
+      bigip_ssl_certificate:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_cachain'
+        state: '{{ state }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Save the running configuration of the BIG-IP
+      bigip_config:
+        save: yes
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+# Create Objects
+
+    - name: Wait a maximum of 300 seconds for BIG-IP to be ready to take configuration
+      bigip_wait:
+        timeout: 300
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Import SSL Key
+      bigip_ssl_key:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+        content: "{{ lookup('file', '{{ playbook_dir }}/{{ domainname }}.key') }}"
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Import SSL Certificate
+      bigip_ssl_certificate:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+        content: "{{ lookup('file', '{{ playbook_dir }}/{{ domainname }}.crt') }}"
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Import SSL CA Chain
+      bigip_ssl_certificate:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_cachain'
+        state: '{{ state }}'
+        content: "{{ lookup('file', '{{ playbook_dir }}/{{ domainname }}_cachain.crt') }}"
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Create a Client SSL profile with a cert/chain/key
+      bigip_profile_client_ssl:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: 'tls_profile_{{ domainname }}'
+        state: '{{ state }}'
+        cert_key_chain:
+          - cert: '/{{ partition }}/{{ domainname }}_bundle'
+            key: '/{{ partition }}/{{ domainname }}_bundle'
+            chain: '/{{ partition}}/{{ domainname }}_cachain'
+            passphrase: '{{ keypassphrase }}'
+      delegate_to: localhost
+      when:
+        - state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Save the running configuration of the BIG-IP
+      bigip_config:
+        save: yes
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+# Remove Local Files
+
+    - name: Remove Local Key
+      ansible.builtin.file:
+        path: '{{ playbook_dir }}/{{ domainname }}.key'
+        state: absent
+      when: state == "present"
+
+    - name: Remove Local Certificate
+      ansible.builtin.file:
+        path: '{{ playbook_dir }}/{{ domainname }}.crt'
+        state: absent
+      when: state == "present"
+
+    - name: Remove Local CA Chain
+      ansible.builtin.file:
+        path: '{{ playbook_dir }}/{{ domainname }}_cachain.crt'
+        state: absent
+      when: state == "present"

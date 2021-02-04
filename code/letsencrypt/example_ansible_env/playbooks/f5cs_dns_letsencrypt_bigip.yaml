@@ -1,0 +1,32 @@
+- name: F5 TLS automation
+  hosts: bigip_group
+  connection: local
+  gather_facts: false
+  serial: 1
+
+## the provider vars are defined under host_vars
+  vars:
+#    provider:
+#      server: 'bigip'
+#      user: 'admin'
+#      password: 'bigip_admin_password'
+#      validate_certs: no
+#      server_port: 443
+#    partition: 'Common'
+#    state: 'present'
+## Optional vars for the role
+#   f5cs_username: 'F5Cloudservices user name'
+#   f5cs_appsword" 'F5Cloudservices password'
+#   domain_name: 'certificate fqdn'
+#   acme_email: 'myemail@mydomain.com'
+## Used to create a real certificate. Default sends to staging, which does not create real certificates
+#   acme_directory_target: 'staging'
+## Create cert/key but do not send to BIG-IP
+#   send_to_bigip: 'off'
+## when Letsencrypt starts rate limiting the certificate per account key
+#   new_le_account_key: true
+## Directory where to create the letsencrypt folders. Default is under the playbook folder
+#   letsencrypt_dir: '{{ playbook_dir}}/F5letsencrypt'
+
+  roles:
+    - ../roles/f5cs_dns_letsencrypt_bigip

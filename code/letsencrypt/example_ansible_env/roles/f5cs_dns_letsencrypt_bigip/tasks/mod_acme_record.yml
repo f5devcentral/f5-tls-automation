@@ -1,0 +1,106 @@
+---
+
+## List all primary DNS subscriptions
+- name: receive all primary DNS subscriptions
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions?catalogId=c-aau0eSVXtL&account_id={{user_account_id}}&service_type=dns"
+    method: GET
+    headers:
+      Accept: "application/json"
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+  register: dns_subscription_details
+
+## get subscription id for zone
+- name: get subscription id as array
+  set_fact:
+    zone_sub_id: "{{ dns_subscription_details.json.subscriptions | json_query(subid) }}"
+  vars:
+    subid: "[?service_instance_name=='{{domain_name}}'].subscription_id"
+
+#- name: show zone_sub_value just for debug reasons
+#  debug:
+#    msg: "{{zone_sub_id}}"
+
+- name: set zone_sub_id value
+  set_fact:
+    zone_sub_id: "{{zone_sub_id[0]}}"
+
+#- name: show zone_sub_value just for debug reasons
+#  debug:
+#    msg: "{{zone_sub_id}}"
+
+## get zone records
+- name: get zone records as array
+  set_fact:
+    zone_records: "{{ dns_subscription_details.json.subscriptions | default({}) | json_query(zonerecords) |to_json }}"
+  vars:
+    zonerecords: "[?service_instance_name=='{{domain_name}}'].configuration.dns_service.records"
+
+#- name: show zone_records just for debug reasons
+#  debug:
+#    msg: "{{zone_records}}"
+
+## remove older _acme-challenge entries from zone records
+- name: remove older _acme_challenge entries
+  set_fact:
+    zone_records_temp: "{{ zone_records_temp | default({}) | combine({item.key: item.value}) }}"
+  when: "item.key != '_acme-challenge:'"
+  with_dict: "{{ zone_records }}"
+
+- name: copy zone_records_temp to zone records
+  set_fact:
+    zone_records: "{{ zone_records_temp }}"
+
+#- name: show zone_records
+#  debug:
+#    var: zone_records
+## create PUT with acme challenge data
+- name: add _acme-challenge to zone_records
+  set_fact:
+    zone_records: "{{ zone_records | combine(  {item.key: item.value} ) }}"
+  with_dict:
+    - "{{acme}}"
+
+- name: format to json
+  set_fact:
+    zone_records: "{{ zone_records | to_nice_json }}"
+
+#- name: show zone_records as var
+#  debug:
+#    var: zone_records
+
+## finalize API call body
+- name: prepare json body for acme challenge
+  template:
+    src: templates/f5dns_acme_challenge.j2
+    dest: "{{role_path}}/templates/f5dns_acme_challenge_{{domain_name}}.json"
+  delegate_to: localhost
+
+## Send API call to modify the zone records for acme challenge
+
+- name: send login to F5 Cloud Services API and receive authentication token
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions/{{zone_sub_id}}"
+    method: PUT
+    headers:
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+    body: "{{lookup('file','{{role_path}}/templates/f5dns_acme_challenge_{{domain_name}}.json') }}"
+    body_format: json
+#  register: declaration_response
+
+
+#- name: check declaration response
+#  debug:
+#    msg: "{{declaration_response}}"
+
+## remove temporary files
+- name: delete temporary file
+  file:
+    path: "{{role_path}}/templates/f5dns_acme_challenge_{{domain_name}}.json"
+    state: absent
+
+- name: wait for 20 seconds to propagate
+  pause:
+    seconds: 20

@@ -1,0 +1,263 @@
+---
+
+#    Created by - Jon Calalang
+#    This task comes with no warranty or support
+#
+#    Modules used:
+#
+#    - uri
+#    - set_fact
+#    - bigip_profile_client_ssl
+#    - bigip_ssl_key
+#    - bigip_ssl_cert
+#    - copy
+#
+#    Module Documentation: https://docs.ansible.com/ansible/2.9/modules/list_of_all_modules.html
+#
+
+- name: Export Certificate and Key from Venafi and create BIG-IP Client SSL Profile
+  hosts: localhost
+  gather_facts: False
+  connection: local
+
+  vars:
+    venafi: 'venafi.fqdn.com'
+    venafiuser: 'Admin'
+    venafipassword: 'Password'
+    venaficlientid: 'certmanager_key'
+    venafiscopeid: 'Certificate:manage'
+    certificatename: 'example.cert.name'
+    keypassphrase: ''
+    bigips: [bigip1.fqdn.com,bigip2.fqdn.com]
+    provider:
+      server: '{{ item }}'
+      user: 'admin'
+      password: 'password'
+      validate_certs: no
+      server_port: 443
+    partition: 'Common'
+    domainname: '{{ certificatename }}'
+    state: 'present'
+
+  tasks:
+
+# Venafi Interaction
+
+    - name: Get Venafi Authentication Token from {{ venafi }}
+      delegate_to: localhost
+      uri:
+        body: '{"username":"{{ venafiuser }}","password":"{{ venafipassword }}","client_id":"{{ venaficlientid }}","scope":"{{ venafiscopeid }}"}'
+        body_format: json
+        method: POST
+        url: "https://{{ venafi }}/vedauth/authorize/"
+        status_code: 200
+        validate_certs: no
+      register: venafi_auth_response
+      retries: 30
+      delay: 5
+      until: "(venafi_auth_response.status == 200)"
+      when: state == "present"
+
+    - name: Assign Auth Token to Variable
+      set_fact:
+        venafi_auth_response: "{{ venafi_auth_response.json.access_token }}"
+      when: state == "present"
+
+    - name: Get Certificate DN location from {{ venafi }}
+      delegate_to: localhost
+      uri:
+        method: GET
+        url: "https://{{ venafi }}/vedsdk/certificates?name={{ certificatename }}"
+        status_code: 200
+        validate_certs: no
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer {{ venafi_auth_response }}
+      register: certificate_dn_location
+      retries: 30
+      delay: 5
+      until: "(certificate_dn_location.status == 200)"
+      when: state == "present"
+
+    - name: Get DN of {{ certificatename }}
+      set_fact:
+        certificate_dn: "{{ certificate_dn_location.json.Certificates[0].DN }}"
+      when: state == "present"
+
+    - name: Get {{ certificatename }} from {{ venafi }}
+      delegate_to: localhost
+      uri:
+        body: '{  "CertificateDN": "{{ certificate_dn }}","Format": "base64","Password": "{{ keypassphrase }}","IncludePrivateKey": true,"IncludeChain": true,"FriendlyName": "string","RootFirstOrder": false,"KeystorePassword": "string"}'
+        body_format: json
+        method: POST
+        url: "https://{{ venafi }}/vedsdk/certificates/Retrieve"
+        status_code: 200
+        validate_certs: no
+        headers:
+          Content-Type: application/json
+          Authorization: Bearer {{ venafi_auth_response }}
+      register: certificate_data
+      retries: 30
+      delay: 5
+      when: state == "present"
+
+    - name: Hold {{ certificatename }} data
+      set_fact:
+        certificate_b64encoded: "{{ certificate_data.json.CertificateData }}"
+      when: state == "present"
+
+    - copy:
+        content: '{{ certificate_b64encoded | b64decode }}'
+        dest: "{{ playbook_dir }}/{{ certificatename }}.key"
+      when: state == "present"
+
+    - copy:
+        content: '{{ certificate_b64encoded | b64decode }}'
+        dest: "{{ playbook_dir }}/{{ certificatename }}.crt"
+      when: state == "present"
+
+    - name: Revoke auth token from {{ venafi }}
+      delegate_to: localhost
+      uri:
+        method: Get
+        url: "https://{{ venafi }}/vedauth/revoke/token"
+        status_code: 200
+        validate_certs: no
+        headers:
+          Authorization: Bearer {{ venafi_auth_response }}
+      retries: 30
+      delay: 5
+      when: state == "present"
+
+# Delete Objects
+
+    - name: Wait a maximum of 300 seconds for BIG-IP to be ready to take configuration
+      bigip_wait:
+        timeout: 300
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Delete a Client SSL profile
+      bigip_profile_client_ssl:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: 'tls_profile_{{ domainname }}'
+        state: '{{ state }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Delete SSL Key
+      bigip_ssl_key:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Delete SSL Certificate
+      bigip_ssl_certificate:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Save the running configuration of the BIG-IP
+      bigip_config:
+        save: yes
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "absent"
+      with_items:
+        - '{{ bigips }}'
+
+# Create Objects
+
+    - name: Wait a maximum of 300 seconds for BIG-IP to be ready to take configuration
+      bigip_wait:
+        timeout: 300
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Import SSL Key
+      bigip_ssl_key:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+        content: "{{ lookup('file', '{{ playbook_dir }}/{{ domainname }}.key') }}"
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Import SSL Certificate
+      bigip_ssl_certificate:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: '{{ domainname }}_bundle'
+        state: '{{ state }}'
+        content: "{{ lookup('file', '{{ playbook_dir }}/{{ domainname }}.crt') }}"
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Create a Client SSL profile with a cert/chain/key
+      bigip_profile_client_ssl:
+        provider: '{{ provider }}'
+        partition: '{{ partition }}'
+        name: 'tls_profile_{{ domainname }}'
+        state: '{{ state }}'
+        cert_key_chain:
+          - cert: '/{{ partition }}/{{ domainname }}_bundle'
+            key: '/{{ partition }}/{{ domainname }}_bundle'
+            passphrase: '{{ keypassphrase }}'
+      delegate_to: localhost
+      when:
+        - state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+    - name: Save the running configuration of the BIG-IP
+      bigip_config:
+        save: yes
+        provider: '{{ provider }}'
+      delegate_to: localhost
+      when: state == "present"
+      with_items:
+        - '{{ bigips }}'
+
+# Remove Local Files
+
+    - name: Remove Local Key
+      ansible.builtin.file:
+        path: '{{ playbook_dir }}/{{ domainname }}.key'
+        state: absent
+      when: state == "present"
+
+    - name: Remove Local Certificate
+      ansible.builtin.file:
+        path: '{{ playbook_dir }}/{{ domainname }}.crt'
+        state: absent
+      when: state == "present"
+
+    - name: Remove Local CA Chain
+      ansible.builtin.file:
+        path: '{{ playbook_dir }}/{{ domainname }}_cachain.crt'
+        state: absent
+      when: state == "present"

@@ -1,0 +1,14 @@
+---
+ ### hand over to letsencrypt to create the certificate
+  - name: "Complete Let's Encrypt challenges"
+    acme_certificate:
+      acme_directory: "{{ acme_directory }}"
+      acme_version: "{{ acme_version }}"
+      account_key_src: "{{ letsencrypt_account_key }}"
+      account_email: "{{ acme_email }}"
+      challenge: "{{ acme_challenge_type }}"
+      csr: "{{ letsencrypt_csrs_dir }}/{{ domain_name }}.csr"
+      dest: "{{ letsencrypt_certs_dir }}/{{ domain_name }}.crt"
+      chain_dest: "{{ letsencrypt_certs_dir }}/chain_{{ domain_name }}.crt"
+      fullchain_dest: "{{ letsencrypt_certs_dir }}/fullchain_{{ domain_name }}"
+      data: "{{ acme_challenge_your_domain }}"

@@ -1,0 +1,9 @@
+## delete Zone only if created by this role
+- name: delete created zone
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions/{{zone_sub_id}}/retire"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+  when: zone_exists | length<1

@@ -1,0 +1,26 @@
+---
+# defaults file for f5cs_dns_letsencrypt_bigip
+f5cs_username: ""
+f5cs_password: ""
+acme_challenge: ""
+acme:
+      _acme-challenge: [{
+        ttl: 15,
+        type: "TXT",
+        values: ["{{acme_challenge}}" ]
+      }
+      ]
+acme_challenge_type: dns-01
+acme_directory_prod: https://acme-v02.api.letsencrypt.org/directory
+acme_directory_staging: https://acme-staging-v02.api.letsencrypt.org/directory
+acme_directory_target: "staging"
+acme_version: 2
+acme_email: "myemail@mydomain.com"
+letsencrypt_dir: '{{ playbook_dir}}/F5letsencrypt'
+letsencrypt_keys_dir: '{{ letsencrypt_dir}}/keys'
+letsencrypt_csrs_dir: '{{ letsencrypt_dir}}/csrs'
+letsencrypt_certs_dir: '{{ letsencrypt_dir}}/certs'
+letsencrypt_account_key: '{{ letsencrypt_dir}}/account/account.key'
+new_le_account_key: false
+domain_name: ""
+send_to_bigip: "on"

@@ -1,0 +1,168 @@
+{
+	"variables": [],
+	"info": {
+		"name": "Certificates and Keys",
+		"_postman_id": "e22fe941-398e-4432-ec92-5f6c2fac7570",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get Authentication Token",
+			"request": {
+				"url": "https://{{big_ip_mgmt}}/mgmt/shared/authn/login",
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"username\":\"\",\n    \"password\":\"\",\n    \"loginProviderName\":\"tmos\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Verify Authentication Works",
+			"request": {
+				"url": "https://{{big_ip_mgmt}}/mgmt/tm/ltm",
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-F5-Auth-Token",
+						"value": "{{big_ip_auth_token}}",
+						"description": ""
+					}
+				],
+				"body": {},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Get Installed Keys",
+			"request": {
+				"url": "https://{{big_ip_mgmt}}/mgmt/tm/sys/crypto/key",
+				"method": "GET",
+				"header": [
+					{
+						"key": "X-F5-Auth-Token",
+						"value": "{{big_ip_auth_token}}",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\":\"Lab1.6_pool\",\n    \"monitor\":\"/Common/Lab1.6_monitor\",\n    \"members\": [\"10.1.10.10:80\",\"10.1.10.11:80\"]\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Install Cert",
+			"request": {
+				"url": "https://{{big_ip_mgmt}}/mgmt/tm/sys/crypto/cert/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-F5-Auth-Token",
+						"value": "{{big_ip_auth_token}}",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"command\": \"install\",\n  \"name\": \"Name_of_Cert\",\n  \"fromURL\": \"{{cert_location}}\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Install Key",
+			"request": {
+				"url": "https://{{big_ip_mgmt}}/mgmt/tm/sys/crypto/key/",
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-F5-Auth-Token",
+						"value": "{{big_ip_auth_token}}",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"command\": \"install\",\n  \"name\": \"Name_of_KEY\",\n  \"fromURL\": \"{{key_location}}\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Create Client SSL Profile",
+			"request": {
+				"url": "https://{{big_ip_mgmt}}/mgmt/tm/ltm/profile/client-ssl",
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-F5-Auth-Token",
+						"value": "{{big_ip_auth_token}}",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"{{new_client_ssl_profile}}\",\n  \"cert\": \"Name_of_Cert.crt\",\n  \"key\": \"Name_of_KEY.key\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Add Client SSL Profile to Virtual Server",
+			"request": {
+				"url": "https://{{big_ip_mgmt}}/mgmt/tm/ltm/virtual/{{virtual_server}}/profiles",
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-F5-Auth-Token",
+						"value": "{{big_ip_auth_token}}",
+						"description": ""
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"description": ""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"{{new_client_ssl_profile}}\",\n  \"partition\": \"Common\"\n}"
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

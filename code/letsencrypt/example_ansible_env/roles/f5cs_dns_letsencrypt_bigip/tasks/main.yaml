@@ -1,0 +1,16 @@
+---
+
+
+- name: check if certificate exists, if exist then do not create the same cert/key pair
+  stat:
+    path: "{{ letsencrypt_certs_dir }}/{{ domain_name }}.crt"
+  register: cert_exist_result
+
+## This section creates the certificate and key
+- include_tasks: cert_creation.yml
+  when: not cert_exist_result.stat.exists
+
+## This section imports the created cert and key into BIG-IP
+## in case send_to_bigip variable is set to false, this will be skipped
+- include_tasks: send_cert_to_bigip.yml
+  when: send_to_bigip == "on"

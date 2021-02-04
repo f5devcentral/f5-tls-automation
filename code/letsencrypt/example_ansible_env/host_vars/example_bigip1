@@ -1,0 +1,8 @@
+    provider:
+      server: 'bigip1'
+      user: 'admin'
+      password: 'bigip_admin_password'
+      validate_certs: no
+      server_port: 443
+    partition: 'Common'
+    state: 'present'

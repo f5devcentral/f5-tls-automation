@@ -1,0 +1,19 @@
+- name: F5 TLS automation
+  hosts: bigip_group
+  connection: local
+  gather_facts: false
+  serial: 1
+
+  vars:
+# Variables used by the role
+    f5cs_username: 'F5Cloudservices user name'
+    f5cs_password: 'F5Cloudservices password'
+    domain_name: 'www.domain.com'
+    acme_email: 'certadmin@domain.com'
+    acme_directory_target: 'prod'
+    send_to_bigip: 'on'
+    letsencrypt_dir: '{{ playbook_dir}}/F5letsencrypt'
+    new_le_account_key: false
+
+  roles:
+    - roles/f5cs_dns_letsencrypt_bigip

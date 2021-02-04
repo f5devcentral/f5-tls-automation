@@ -1,0 +1,39 @@
+---
+  - name: Use a file lookup to import Key
+    bigip_ssl_key:
+      provider: '{{ provider }}'
+      partition: '{{ partition }}'
+      name: '{{ domain_name}}_bundle'
+      state: '{{ state }}'
+      content: "{{ lookup('file', '{{ letsencrypt_keys_dir }}/{{ domain_name }}.key') }}"
+    delegate_to: localhost
+
+  - name: Use a file lookup to import Certificate
+    bigip_ssl_certificate:
+      provider: '{{ provider }}'
+      partition: '{{ partition }}'
+      name: '{{ domain_name}}_bundle'
+      state: '{{ state }}'
+      content: "{{ lookup('file', '{{ letsencrypt_certs_dir }}/{{ domain_name }}.crt') }}"
+    delegate_to: localhost
+
+  - name: Use a file lookup to import CA Chain
+    bigip_ssl_certificate:
+      provider: '{{ provider }}'
+      partition: '{{ partition }}'
+      name: '{{ domain_name}}_cachain'
+      state: '{{ state }}'
+      content: "{{ lookup('file', '{{ letsencrypt_certs_dir }}/chain_{{ domain_name }}.crt') }}"
+    delegate_to: localhost
+
+  - name: Create a client SSL profile with a cert/key/chain setting
+    bigip_profile_client_ssl:
+      provider: '{{ provider }}'
+      partition: '{{ partition }}'
+      name: 'tls_profile_{{domain_name}}'
+      state: '{{ state }}'
+      cert_key_chain:
+        - cert: '/{{ partition }}/{{ domain_name}}_bundle'
+          key: '/{{ partition }}/{{ domain_name}}_bundle'
+          chain: '/{{ partition}}/{{ domain_name}}_cachain'
+    delegate_to: localhost

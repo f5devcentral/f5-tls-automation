@@ -1,0 +1,25 @@
+{
+    "account_id": "{{user_account_id}}",
+    "catalog_id": "c-aau0eSVXtL",
+    "service_instance_name": "{{domain_name}}",
+    "service_type": "dns",
+    "configuration": {
+        "dns_service": {
+            "zone": "{{domain_name}}",
+            "records": {
+                "": [
+                    {
+                        "ttl": 15,
+                        "type": "MX",
+                        "values": [
+                            {
+                                "domain": "{{domain_name}}",
+                                "priority": 1
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}

@@ -1,0 +1,39 @@
+---
+
+- include_tasks: prepare_environment.yml
+
+- include_tasks: initial_letsencrypt_request.yml
+
+## Login into F5 Cloudservices and store credentials for subsequent tasks
+- include_tasks: login_to_f5cs.yml
+
+## List all primary DNS subscriptions
+## Check if the zone is already created. If it is created skip zone creation task
+- name: receive all primary DNS subscriptions
+  uri:
+    url: "https://api.cloudservices.f5.com/v1/svc-subscription/subscriptions?catalogId=c-aau0eSVXtL&account_id={{user_account_id}}&service_type=dns"
+    method: GET
+    headers:
+      Accept: "application/json"
+      Authorization: "Bearer {{ f5_auth_token }}"
+      Content-Type: "application/json"
+  register: dns_subscription_details
+
+## check if Zone already exists. Create if it does not exist
+- name: check if new zone record already exists
+  set_fact:
+    zone_exists: "{{ dns_subscription_details.json.subscriptions | json_query(subid) }}"
+  vars:
+    subid: "[?service_instance_name=='{{domain_name}}']"
+
+- include_tasks: create_new_zone_record.yml
+  when: zone_exists | length<1
+
+## Modify acme challenge entry in zone record
+- include_tasks: mod_acme_record.yml
+
+## Finish acme challenge, let letsencrypt sign certificate and download certs in certs folder
+- include_tasks: finish_letsencrypt_request.yml
+
+## Clean up task for temporary file
+- include_tasks: delete_temp_zone_record.yml
