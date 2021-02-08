@@ -1,5 +1,5 @@
 ================================================
-BIG-IP - Let's Encrypt with F5 Cloudservices DNS
+BIG-IP - Lets Encrypt with F5 Cloudservices DNS
 ================================================
 
 .. note:: Tested with Ansible 2.09
@@ -10,7 +10,7 @@ Summary
 
 This ansible role provides following functionality:
 
-1. create TLS certificate and key using Let's Encrypt as CA
+1. create TLS certificate and key using Lets Encrypt as CA
 2. uses F5 Cloudservices primary DNS offering as validation for domain ownership
 3. uploads generated certificate and key to a BIG-IP and creates a SSL Client profile with it.
 
@@ -44,11 +44,11 @@ Optional variables
 +========================+===================================+==============================================+
 | acme_email:            | ``myemail@mydomain.com``          | e-mail address for TSL certificate           |
 +------------------------+-----------------------------------+----------------------------------------------+
-| letsencrypt_dir:       | ``{{playbook_dir}}/F5letsencrypt``| directory for Let's Encrypt files            |
+| letsencrypt_dir:       | ``{{playbook_dir}}/F5letsencrypt``| directory for Lets Encrypt files            |
 +------------------------+-----------------------------------+----------------------------------------------+
 | new_le_account_key:    | ``false``                         | ``true`` or ``false``                        |
 |                        |                                   | forces role to generate a new                |
-|                        |                                   | Let's Encrypt account ID                     |
+|                        |                                   | Lets Encrypt account ID                     |
 +------------------------+-----------------------------------+----------------------------------------------+
 | send_to_bigip:         |  ``on``                           | ``on`` send cert/key to BIG-IP               |
 |                        |                                   |                                              |
@@ -114,20 +114,20 @@ The login parameters for F5 Cloudservices can be:
 a. handed over as variables during the call and/or
 b. can be part of the playbook as shown in the playbook examples.
 
-Use case 3: Let's Encrypt staging
+Use case 3: Lets Encrypt staging
 =================================
 
-Example run command for Let's Encrypt staging API environment.
-Let's Encrypt staging environment **does not** create valid TLS certificates. It can be used for testing and verification.
+Example run command for Lets Encrypt staging API environment.
+Lets Encrypt staging environment **does not** create valid TLS certificates. It can be used for testing and verification.
 
 This is the default setting of the role. This is done to prevent the user to use all
 
 ``ansible-playbook example_playbook.yml  -e "domain_name=<www.mydomain.com>"``
 
-Use case 4: Let's Encrypt production
+Use case 4: Lets Encrypt production
 ====================================
 
-Example run command for Let's Encrypt production API environment. This command creates public TLS certificates:
+Example run command for Lets Encrypt production API environment. This command creates public TLS certificates:
 
 ``ansible-playbook example_playbook.yml  -e "domain_name=<www.mydomain.com>" -e "acme_email=certadmin@mydomain.com" -e "acme_directory_target=prod"``
 
@@ -140,22 +140,22 @@ If it is not desired to upload the cert/key into BIG-IP, use the ``send_to_bigip
 
 This will create the folder structure. Per default a ``F5letsencrypt`` folder is created under the playbook directory. Subfolders for **keys** , **certs** and **csrs** are created.
 
-Use case 6: change folder for Let's Encrypt certificate/keys
+Use case 6: change folder for Lets Encrypt certificate/keys
 ============================================================
 
-To change the location of the Let's Encrypt folder structure, use the ``letsencrypt_dir`` variable.
+To change the location of the Lets Encrypt folder structure, use the ``letsencrypt_dir`` variable.
 
 ``ansible-playbook example_playbook.yml  -e "domain_name=<www.mydomain.com>" -e "acme_email=certadmin@mydomain.com"  -e "letsencrypt_dir=/var/temp/letsencrypt"``
 
-Use case 7: working around Let's Encrypt rate limiting
+Use case 7: working around Lets Encrypt rate limiting
 ======================================================
 
-Let's Encrypt limits the number of requests a single account key can send in a given time interval. I found it usefull to have a limited workaround to extend the rate limit during tests and development.
-One limiting factor is the account key. With following variable, the role will generate a new Account key and allow more testing, before IP rate limiting of Let's Encrpt kick in:
+Lets Encrypt limits the number of requests a single account key can send in a given time interval. I found it usefull to have a limited workaround to extend the rate limit during tests and development.
+One limiting factor is the account key. With following variable, the role will generate a new Account key and allow more testing, before IP rate limiting of Lets Encrpt kick in:
 
 ``ansible-playbook example_playbook.yml  -e "domain_name=<www.mydomain.com>" -e "acme_email=certadmin@mydomain.com" -e "acme_directory_target=prod" -e "new_le_account_key=true"``
 
-.. warning:: This role will create a folder structure to store Let's Encrypt account key, certificate, key, CA certificate and csr.
+.. warning:: This role will create a folder structure to store Lets Encrypt account key, certificate, key, CA certificate and csr.
 
 ****************************
 Example Ansible environment:
@@ -203,29 +203,29 @@ These are the steps executed to create the certificates. There is no user interv
    - This directory can be changed via variable ``letsencrypt_dir``
    - creates following subdirectorys: **account**, **certs**, **csrs**, **keys**
 
-3. Creates Let's Encrypt Account-ID
+3. Creates Lets Encrypt Account-ID
 
-   - variable ``new_le_account_key`` forces the role to create a new Account ID if desired. Usefull if Let's Encrypt ratelimits the Account-ID.
+   - variable ``new_le_account_key`` forces the role to create a new Account ID if desired. Usefull if Lets Encrypt ratelimits the Account-ID.
 
 4. Create TLS Certificate signing request
 
    - the csr is stored in the csrs subfolder
 
-5. Send API call to Let's Encrypt to initiate domain name ownership verification
+5. Send API call to Lets Encrypt to initiate domain name ownership verification
 
    - this role uses DNS as verification method.
-   - per default Let's Encrypt staging envionment is used. This results in test certificates
-   - variable ``acme_directory_target`` sends it to Let's Encrypt production environment for public cert creation
+   - per default Lets Encrypt staging envionment is used. This results in test certificates
+   - variable ``acme_directory_target`` sends it to Lets Encrypt production environment for public cert creation
 
 6. Creates/modifys acme-challenge value into F5 Cloudservices primary DNS primary zone entry for existing zone record
 
    - uses an exisiting F5 Cloudservices account with subscription to primary DNS
    - the primary zone record for the domain name has to exist and be activated before the role is run
-   - creates or modifies the **_acme-challenge** dns prefix entry for Let's Encrypt validation
+   - creates or modifies the **_acme-challenge** dns prefix entry for Lets Encrypt validation
 
-7. Sends API call to Let's Encrypt to finish domain name ownership validation and download certificate and fullchain certificate
+7. Sends API call to Lets Encrypt to finish domain name ownership validation and download certificate and fullchain certificate
 
-   - finishes Let's Encrypt verification and download certificate, CA certificate and fullchain certificate into the certs subfolder
+   - finishes Lets Encrypt verification and download certificate, CA certificate and fullchain certificate into the certs subfolder
 
 8. Upload certificate and key into BIG-IP
 
