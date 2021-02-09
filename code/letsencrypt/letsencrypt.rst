@@ -44,11 +44,11 @@ Optional variables
 +========================+===================================+==============================================+
 | acme_email:            | ``myemail@mydomain.com``          | e-mail address for TSL certificate           |
 +------------------------+-----------------------------------+----------------------------------------------+
-| letsencrypt_dir:       | ``{{playbook_dir}}/F5letsencrypt``| directory for Lets Encrypt files            |
+| letsencrypt_dir:       | ``{{playbook_dir}}/F5letsencrypt``| directory for Lets Encrypt files             |
 +------------------------+-----------------------------------+----------------------------------------------+
 | new_le_account_key:    | ``false``                         | ``true`` or ``false``                        |
 |                        |                                   | forces role to generate a new                |
-|                        |                                   | Lets Encrypt account ID                     |
+|                        |                                   | Lets Encrypt account ID                      |
 +------------------------+-----------------------------------+----------------------------------------------+
 | send_to_bigip:         |  ``on``                           | ``on`` send cert/key to BIG-IP               |
 |                        |                                   |                                              |
